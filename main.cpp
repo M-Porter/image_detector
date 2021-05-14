@@ -11,7 +11,6 @@ void canny_detection(cv::String img_path)
     cv::Mat img_gray_blurred;
     cv::Mat img_canny;
 
-    // cv::String img_path = "test_images/img_1.png";
     img_original = cv::imread(img_path, cv::IMREAD_COLOR);
     if (img_original.empty())
     {
@@ -33,7 +32,6 @@ void mser_detection(cv::String img_path)
     cv::Mat img_blurred;
     cv::Mat img_output;
 
-    // cv::String img_path = "test_images/img_1.png";
     img_original = cv::imread(img_path, cv::IMREAD_COLOR);
     if (img_original.empty())
     {
