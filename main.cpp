@@ -4,18 +4,15 @@
 #include <opencv2/imgproc.hpp>
 #include <iostream>
 
-void canny_detection(cv::String img_path)
+void sobel_detection(cv::Mat img_original)
 {
-    cv::Mat img_original;
+}
+
+void canny_detection(cv::Mat img_original)
+{
     cv::Mat img_blurred;
     cv::Mat img_gray_blurred;
     cv::Mat img_canny;
-
-    img_original = cv::imread(img_path, cv::IMREAD_COLOR);
-    if (img_original.empty())
-    {
-        std::cout << "Could not read the image: " << img_path << std::endl;
-    }
 
     cv::GaussianBlur(img_original, img_blurred, cv::Size(9, 9), 0, 0, cv::BORDER_DEFAULT);
     cv::cvtColor(img_blurred, img_gray_blurred, cv::COLOR_RGBA2GRAY);
@@ -26,18 +23,10 @@ void canny_detection(cv::String img_path)
     return;
 }
 
-void mser_detection(cv::String img_path)
+void mser_detection(cv::Mat img_original)
 {
-    cv::Mat img_original;
     cv::Mat img_blurred;
     cv::Mat img_output;
-
-    img_original = cv::imread(img_path, cv::IMREAD_COLOR);
-    if (img_original.empty())
-    {
-        std::cout << "Could not read the image: " << img_path << std::endl;
-        return;
-    }
 
     img_original.copyTo(img_output);
 
@@ -60,8 +49,17 @@ void mser_detection(cv::String img_path)
 
 int main()
 {
-    canny_detection("test_images/img_1.png");
-    mser_detection("test_images/img_1.png");
+    cv::String img_path = "test_images/img_1.png";
+
+    cv::Mat img_original = cv::imread(img_path, cv::IMREAD_COLOR);
+    if (img_original.empty())
+    {
+        std::cout << "Could not read the image: " << img_path << std::endl;
+        return 1;
+    }
+
+    canny_detection(img_original);
+    mser_detection(img_original);
 
     char key;
     do
