@@ -6,6 +6,32 @@
 
 void sobel_detection(cv::Mat img_original)
 {
+    cv::Mat img_blurred;
+    cv::Mat img_gray;
+    cv::Mat img_sobol;
+    cv::Mat img_grad_x;
+    cv::Mat img_grad_y;
+
+    cv::GaussianBlur(img_original, img_blurred, cv::Size(9, 9), 0, 0, cv::BORDER_DEFAULT);
+    cv::cvtColor(img_blurred, img_gray, cv::COLOR_BGR2GRAY);
+    cv::Sobel(img_gray, img_grad_x, CV_64F, 1, 0);
+    cv::Sobel(img_gray, img_grad_y, CV_64F, 0, 1);
+
+    cv::convertScaleAbs(img_grad_x, img_grad_x);
+    cv::convertScaleAbs(img_grad_y, img_grad_y);
+
+    cv::addWeighted(img_grad_x, 0.5, img_grad_y, 0.5, 0, img_sobol);
+
+    // grad y is the best for vertical edge detection
+    cv::imshow("grad x", img_grad_x);
+
+    // grad y is the best for horizontal edge detection
+    cv::imshow("grad y", img_grad_y);
+
+    // sobel is only good for image outlines but not good for finding meme bounds
+    cv::imshow("sobol", img_sobol);
+
+    return;
 }
 
 void canny_detection(cv::Mat img_original)
@@ -15,7 +41,7 @@ void canny_detection(cv::Mat img_original)
     cv::Mat img_canny;
 
     cv::GaussianBlur(img_original, img_blurred, cv::Size(9, 9), 0, 0, cv::BORDER_DEFAULT);
-    cv::cvtColor(img_blurred, img_gray_blurred, cv::COLOR_RGBA2GRAY);
+    cv::cvtColor(img_blurred, img_gray_blurred, cv::COLOR_BGR2GRAY);
     cv::Canny(img_gray_blurred, img_canny, 100, 200);
 
     cv::imshow("canny", img_canny);
@@ -51,15 +77,16 @@ int main()
 {
     cv::String img_path = "test_images/img_1.png";
 
-    cv::Mat img_original = cv::imread(img_path, cv::IMREAD_COLOR);
-    if (img_original.empty())
+    cv::Mat img = cv::imread(img_path, cv::IMREAD_COLOR);
+    if (img.empty())
     {
         std::cout << "Could not read the image: " << img_path << std::endl;
         return 1;
     }
 
-    canny_detection(img_original);
-    mser_detection(img_original);
+    canny_detection(img);
+    mser_detection(img);
+    sobel_detection(img);
 
     char key;
     do
