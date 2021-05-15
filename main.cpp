@@ -77,19 +77,20 @@ void morph(cv::Mat img_original)
     cv::imshow("out", img_out);
 }
 
+/*
+THRESH_TRIANGLE makes the image combine into a single solid which
+then makes it easier to determine the bounds of the image for cropping
+
+light mode = black area is what we want
+dark mode = gray area is what we want
+ */
 void threshold(cv::Mat src)
 {
     cv::Mat dst;
     src.copyTo(dst);
 
-    // gray it
     cv::cvtColor(dst, dst, cv::COLOR_BGR2GRAY);
-
-    // blur it
     cv::medianBlur(dst, dst, 5);
-
-    // THRESH_TRIANGLE makes the image combine into a single solid which
-    // then makes it easier to determine the bounds of the image for cropping
     cv::threshold(dst, dst, 100, 200, cv::THRESH_TRIANGLE);
 
     cv::imshow("thresh", dst);
