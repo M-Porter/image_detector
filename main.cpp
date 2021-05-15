@@ -1,7 +1,9 @@
-#include <opencv2/opencv.hpp>
-#include <opencv2/imgcodecs.hpp>
-#include <opencv2/highgui.hpp>
-#include <opencv2/imgproc.hpp>
+#include "opencv2/opencv.hpp"
+#include "opencv2/core.hpp"
+#include "opencv2/imgproc.hpp"
+#include "opencv2/imgcodecs.hpp"
+#include "opencv2/highgui.hpp"
+
 #include <iostream>
 
 cv::Mat do_sobel(cv::Mat in)
@@ -39,7 +41,7 @@ void canny_detection(cv::Mat img_original)
     cv::cvtColor(img_blurred, img_gray_blurred, cv::COLOR_BGR2GRAY);
     cv::Canny(img_gray_blurred, img_canny, 100, 200);
 
-    cv::imshow("canny", img_canny);
+    cv::imshow(__func__, img_canny);
 }
 
 void mser_detection(cv::Mat img_original)
@@ -61,7 +63,7 @@ void mser_detection(cv::Mat img_original)
         cv::rectangle(img_output, bbox[i], CV_RGB(0, 255, 0));
     }
 
-    cv::imshow("mser", img_output);
+    cv::imshow(__func__, img_output);
 }
 
 void morph(cv::Mat img_original)
@@ -74,7 +76,7 @@ void morph(cv::Mat img_original)
     img_out = do_sobel(img_out);
     cv::morphologyEx(img_out, img_out, cv::MORPH_CLOSE, cv::Mat());
 
-    cv::imshow("out", img_out);
+    cv::imshow(__func__, img_out);
 }
 
 /*
@@ -87,13 +89,76 @@ dark mode = gray area is what we want
 void threshold(cv::Mat src)
 {
     cv::Mat dst;
+
     src.copyTo(dst);
 
     cv::cvtColor(dst, dst, cv::COLOR_BGR2GRAY);
     cv::medianBlur(dst, dst, 5);
     cv::threshold(dst, dst, 100, 200, cv::THRESH_TRIANGLE);
+    cv::morphologyEx(dst, dst, cv::MORPH_OPEN, cv::Mat());
 
-    cv::imshow("thresh", dst);
+    cv::imshow(__func__, dst);
+}
+
+double angle(cv::Point pt1, cv::Point pt2, cv::Point pt0)
+{
+    double dx1 = pt1.x - pt0.x;
+    double dy1 = pt1.y - pt0.y;
+    double dx2 = pt2.x - pt0.x;
+    double dy2 = pt2.y - pt0.y;
+    return (dx1 * dx2 + dy1 * dy2) / sqrt((dx1 * dx1 + dy1 * dy1) * (dx2 * dx2 + dy2 * dy2) + 1e-10);
+}
+
+void find_squares(cv::Mat &src, std::vector<std::vector<cv::Point>> &squares)
+{
+    squares.clear();
+
+    std::vector<std::vector<cv::Point>> contours;
+    cv::findContours(src, contours, cv::RETR_LIST, cv::CHAIN_APPROX_SIMPLE);
+
+    std::vector<cv::Point> approx;
+
+    for (size_t i = 0; i < contours.size(); i++)
+    {
+        cv::approxPolyDP(contours[i], approx, cv::arcLength(contours[i], true) * 0.02, true);
+
+        if (approx.size() == 4 &&
+            fabs(cv::contourArea(approx)) > 1000 &&
+            cv::isContourConvex(approx))
+        {
+            double maxCosine = 0;
+
+            for (int j = 2; j < 5; j++)
+            {
+                double cosine = fabs(angle(approx[j % 4], approx[j - 2], approx[j - 1]));
+                maxCosine = MAX(maxCosine, cosine);
+            }
+
+            if (maxCosine < 0.3)
+            {
+                std::cout << "corner found" << std::endl;
+                squares.push_back(approx);
+            }
+        }
+    }
+}
+
+void threshold_contours(cv::Mat src)
+{
+    cv::Mat dst;
+
+    src.copyTo(dst);
+
+    cv::cvtColor(dst, dst, cv::COLOR_BGR2GRAY);
+    cv::medianBlur(dst, dst, 5);
+    cv::threshold(dst, dst, 0, 100, cv::THRESH_TRIANGLE);
+    cv::dilate(dst, dst, cv::Mat());
+
+    std::vector<std::vector<cv::Point>> squares;
+    find_squares(dst, squares);
+
+    // cv::imshow("src", src);
+    cv::imshow(__func__, dst);
 }
 
 int main(int argc, char *argv[])
@@ -111,7 +176,8 @@ int main(int argc, char *argv[])
     // mser_detection(img); // rule out mser for now
     // sobel_detection(img);
     // morph(img);
-    threshold(img);
+    // threshold(img);
+    threshold_contours(img);
 
     char key;
     do
