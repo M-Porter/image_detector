@@ -4,37 +4,32 @@
 #include <opencv2/imgproc.hpp>
 #include <iostream>
 
-cv::Mat sobel_detection(cv::Mat img_original)
+cv::Mat do_sobel(cv::Mat in)
 {
-    cv::Mat img_blurred;
-    cv::Mat img_gray;
-    cv::Mat img_sobol;
     cv::Mat img_grad_x;
     cv::Mat img_grad_y;
-
-    cv::GaussianBlur(img_original, img_blurred, cv::Size(9, 9), 0, 0, cv::BORDER_DEFAULT);
-    cv::cvtColor(img_blurred, img_gray, cv::COLOR_BGR2GRAY);
-    cv::Sobel(img_gray, img_grad_x, CV_64F, 1, 0);
-    cv::Sobel(img_gray, img_grad_y, CV_64F, 0, 1);
-
+    cv::Sobel(in, img_grad_x, CV_64F, 1, 0);
+    cv::Sobel(in, img_grad_y, CV_64F, 0, 1);
     cv::convertScaleAbs(img_grad_x, img_grad_x);
     cv::convertScaleAbs(img_grad_y, img_grad_y);
 
-    cv::addWeighted(img_grad_x, 0.5, img_grad_y, 0.5, 0, img_sobol);
+    cv::Mat out;
+    cv::addWeighted(img_grad_x, 0.33, img_grad_y, 0.33, 0, out);
 
-    // grad y is the best for vertical edge detection
-    // cv::imshow("grad x", img_grad_x);
-
-    // grad y is the best for horizontal edge detection
-    // cv::imshow("grad y", img_grad_y);
-
-    // sobel is only good for image outlines but not good for finding meme bounds
-    // cv::imshow("sobol", img_sobol);
-
-    return img_sobol;
+    return out;
 }
 
-cv::Mat canny_detection(cv::Mat img_original)
+void sobel_detection(cv::Mat img_original)
+{
+    cv::Mat img_blurred;
+    cv::Mat img_gray;
+    cv::GaussianBlur(img_original, img_blurred, cv::Size(9, 9), 0, 0, cv::BORDER_DEFAULT);
+    cv::cvtColor(img_blurred, img_gray, cv::COLOR_BGR2GRAY);
+
+    cv::imshow("sobol", do_sobel(img_original));
+}
+
+void canny_detection(cv::Mat img_original)
 {
     cv::Mat img_blurred;
     cv::Mat img_gray_blurred;
@@ -44,12 +39,10 @@ cv::Mat canny_detection(cv::Mat img_original)
     cv::cvtColor(img_blurred, img_gray_blurred, cv::COLOR_BGR2GRAY);
     cv::Canny(img_gray_blurred, img_canny, 100, 200);
 
-    // cv::imshow("canny", img_canny);
-
-    return img_canny;
+    cv::imshow("canny", img_canny);
 }
 
-cv::Mat mser_detection(cv::Mat img_original)
+void mser_detection(cv::Mat img_original)
 {
     cv::Mat img_blurred;
     cv::Mat img_output;
@@ -68,14 +61,43 @@ cv::Mat mser_detection(cv::Mat img_original)
         cv::rectangle(img_output, bbox[i], CV_RGB(0, 255, 0));
     }
 
-    // cv::imshow("mser", img_output);
-
-    return img_output;
+    cv::imshow("mser", img_output);
 }
 
-int main()
+void morph(cv::Mat img_original)
 {
-    cv::String img_path = "test_images/img_4.png";
+    cv::Mat img_gray;
+    cv::Mat img_out;
+
+    cv::cvtColor(img_original, img_out, cv::COLOR_BGR2GRAY);
+    cv::GaussianBlur(img_out, img_out, cv::Size(9, 9), 0);
+    img_out = do_sobel(img_out);
+    cv::morphologyEx(img_out, img_out, cv::MORPH_CLOSE, cv::Mat());
+
+    cv::imshow("out", img_out);
+}
+
+void threshold(cv::Mat src)
+{
+    cv::Mat dst;
+    src.copyTo(dst);
+
+    // gray it
+    cv::cvtColor(dst, dst, cv::COLOR_BGR2GRAY);
+
+    // blur it
+    cv::medianBlur(dst, dst, 5);
+
+    // THRESH_TRIANGLE makes the image combine into a single solid which
+    // then makes it easier to determine the bounds of the image for cropping
+    cv::threshold(dst, dst, 100, 200, cv::THRESH_TRIANGLE);
+
+    cv::imshow("thresh", dst);
+}
+
+int main(int argc, char *argv[])
+{
+    cv::String img_path = argv[1];
 
     cv::Mat img = cv::imread(img_path, cv::IMREAD_COLOR);
     if (img.empty())
@@ -84,9 +106,11 @@ int main()
         return 1;
     }
 
-    cv::imshow("canny", canny_detection(img));
-    // cv::imshow("mser", mser_detection(img)); // rule out mser for now
-    cv::imshow("sobel", sobel_detection(img));
+    // canny_detection(img);
+    // mser_detection(img); // rule out mser for now
+    // sobel_detection(img);
+    // morph(img);
+    threshold(img);
 
     char key;
     do
