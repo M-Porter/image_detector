@@ -157,7 +157,9 @@ void threshold_contours(cv::Mat src)
     std::vector<std::vector<cv::Point>> squares;
     find_squares(dst, squares);
 
-    // cv::imshow("src", src);
+    cv::cvtColor(dst, dst, cv::COLOR_GRAY2BGR);
+    cv::polylines(dst, squares, true, cv::Scalar(0, 255, 0), 3, cv::LINE_AA);
+
     cv::imshow(__func__, dst);
 }
 
@@ -168,7 +170,7 @@ int main(int argc, char *argv[])
     cv::Mat img = cv::imread(img_path, cv::IMREAD_COLOR);
     if (img.empty())
     {
-        std::cout << "Could not read the image: " << img_path << std::endl;
+        std::cout << "Could not read image: " << img_path << std::endl;
         return 1;
     }
 
