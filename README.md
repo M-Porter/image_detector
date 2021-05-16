@@ -2,6 +2,10 @@
 
 Scratch library for messing around with opencv. Primary use is to detect the edge of images within images (e.g. crop a meme in a screenshot).
 
+## Example
+
+![example.png](./example.png)
+
 ## Getting Started
 
 1. Install opencv: `brew install opencv`
