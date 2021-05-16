@@ -142,8 +142,93 @@ void find_squares(cv::Mat &src, std::vector<std::vector<cv::Point>> &squares)
     }
 }
 
+/*
+Contour sometimes returns uneven rectangle due to rounded corners. This function
+accounts for that and expands the rectangle to the max bounds of the src
+vectors setting it to out.
+*/
 void max_square_edges(std::vector<std::vector<cv::Point>> src, std::vector<std::vector<cv::Point>> &dst)
 {
+    dst.clear();
+
+    int max_x = INT_MIN;
+    int min_x = INT_MAX;
+    int max_y = INT_MIN;
+    int min_y = INT_MAX;
+
+    // first get the max min x and y values
+    for (size_t i = 0; i < src.size(); i++)
+    {
+        for (size_t j = 0; j < src[i].size(); j++)
+        {
+            if (max_x == INT_MIN)
+                max_x = src[i][j].x;
+            if (min_x == INT_MAX)
+                max_x = src[i][j].x;
+            if (max_y == INT_MIN)
+                max_y = src[i][j].y;
+            if (min_y == INT_MAX)
+                min_y = src[i][j].y;
+
+            max_x = MAX(max_x, src[i][j].x);
+            min_x = MIN(min_x, src[i][j].x);
+
+            max_y = MAX(max_y, src[i][j].y);
+            min_y = MIN(min_y, src[i][j].y);
+
+            std::cout
+                << "x: "
+                << src[i][j].x
+                << ", y: "
+                << src[i][j].y
+                << ", min x: "
+                << min_x
+                << ", max x: "
+                << max_x
+                << ", min y: "
+                << min_y
+                << ", max y: "
+                << max_y
+                << std::endl;
+        }
+    }
+
+    std::cout << std::endl;
+    std::cout << "max x: " << max_x << std::endl;
+    std::cout << "min x: " << min_x << std::endl;
+    std::cout << "max y: " << max_y << std::endl;
+    std::cout << "min y: " << min_y << std::endl;
+
+    for (size_t i = 0; i < src.size(); i++)
+    {
+        std::vector<cv::Point> square_p;
+
+        // index 0 - top left, min x, min y
+        // index 1 - bottom left, min x, max y
+        // index 2 - bottom right, max x, max y
+        // index 3 - top right, max x, min y
+        cv::Point top_left;
+        top_left.x = min_x;
+        top_left.y = min_y;
+        square_p.push_back(top_left);
+
+        cv::Point bottom_left;
+        bottom_left.x = min_x;
+        bottom_left.y = max_y;
+        square_p.push_back(bottom_left);
+
+        cv::Point bottom_right;
+        bottom_right.x = max_x;
+        bottom_right.y = max_y;
+        square_p.push_back(bottom_right);
+
+        cv::Point top_right;
+        top_right.x = max_x;
+        top_right.y = min_y;
+        square_p.push_back(top_right);
+
+        dst.push_back(square_p);
+    }
 }
 
 void threshold_contours(cv::Mat src)
@@ -167,7 +252,7 @@ void threshold_contours(cv::Mat src)
 
     // cvtColor to bgr so that polylines are green and not gray
     cv::cvtColor(dst, dst, cv::COLOR_GRAY2BGR);
-    cv::polylines(dst, maybe_squares, true, cv::Scalar(0, 255, 0), 3, cv::LINE_AA);
+    cv::polylines(dst, squares, true, cv::Scalar(0, 0, 255), 3, cv::LINE_AA);
 
     cv::imshow(__func__, dst);
 }
