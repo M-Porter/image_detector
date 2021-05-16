@@ -204,6 +204,26 @@ void largest_area(std::vector<std::vector<cv::Point>> squares, std::vector<cv::P
     dst = l_square;
 }
 
+void crop_image(cv::Mat src, std::vector<cv::Point> sq, cv::Mat &dst)
+{
+    int h = abs(sq[0].y - sq[1].y);
+    int w = abs(sq[1].x - sq[2].x);
+
+    std::cout
+        << "x: " << sq[0].x
+        << "\ty: " << sq[0].y
+        << "\th: " << h
+        << "\tw: " << w
+        << std::endl
+        << std::endl;
+
+    cv::Rect rect = cv::Rect(sq[0].x, sq[0].y, w, h);
+
+    // cv::Mat ref = src(cv::Range(sq[0].x, sq[0].y), cv::Range(h, w));
+    cv::Mat ref = src(rect);
+    ref.copyTo(dst);
+}
+
 void find_image(cv::Mat src)
 {
     cv::Mat dst;
@@ -240,6 +260,10 @@ void find_image(cv::Mat src)
     cv::cvtColor(dst, dst, cv::COLOR_GRAY2BGR);
     cv::polylines(dst, l_sqs, true, cv::Scalar(0, 255, 0), 3, cv::LINE_AA);
 
+    cv::Mat cropped;
+    crop_image(src, l_sq, cropped);
+
+    cv::imshow("cropped", cropped);
     cv::imshow(__func__, dst);
 }
 
