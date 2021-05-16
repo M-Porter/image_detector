@@ -105,24 +105,24 @@ void max_square_edges(std::vector<std::vector<cv::Point>> src, std::vector<std::
         std::vector<cv::Point> square_p;
 
         // index 0 - top left, min x, min y
-        // index 1 - bottom left, min x, max y
-        // index 2 - bottom right, max x, max y
-        // index 3 - top right, max x, min y
         cv::Point top_left;
         top_left.x = min_x;
         top_left.y = min_y;
         square_p.push_back(top_left);
 
+        // index 1 - bottom left, min x, max y
         cv::Point bottom_left;
         bottom_left.x = min_x;
         bottom_left.y = max_y;
         square_p.push_back(bottom_left);
 
+        // index 2 - bottom right, max x, max y
         cv::Point bottom_right;
         bottom_right.x = max_x;
         bottom_right.y = max_y;
         square_p.push_back(bottom_right);
 
+        // index 3 - top right, max x, min y
         cv::Point top_right;
         top_right.x = max_x;
         top_right.y = min_y;
@@ -169,6 +169,41 @@ bool first_row_is_white(cv::Mat src)
     return is_white;
 }
 
+/**
+ * Finds the largest square by area
+ */
+void largest_area(std::vector<std::vector<cv::Point>> squares, std::vector<cv::Point> &dst)
+{
+    dst.clear();
+
+    int l_area;
+    std::vector<cv::Point> l_square;
+
+    // loop over squares
+    for (size_t i = 0; i < squares.size(); i++)
+    {
+        // 3rd point is the bottom right so we can calculate the area off that
+        int h = squares[i][0].y - squares[i][1].y;
+        int w = squares[i][1].x - squares[i][2].x;
+        int area = h * w;
+
+        if (i == 0)
+        {
+            l_square = squares[i];
+            l_area = area;
+            continue;
+        }
+
+        if (area > l_area)
+        {
+            l_area = area;
+            l_square = squares[i];
+        }
+    }
+
+    dst = l_square;
+}
+
 void find_image(cv::Mat src)
 {
     cv::Mat dst;
@@ -195,9 +230,15 @@ void find_image(cv::Mat src)
     std::vector<std::vector<cv::Point>> squares;
     max_square_edges(maybe_squares, squares);
 
+    // get largest square.
+    std::vector<std::vector<cv::Point>> l_sqs;
+    std::vector<cv::Point> l_sq;
+    largest_area(squares, l_sq);
+    l_sqs.push_back(l_sq);
+
     // cvtColor to bgr so that polylines are green and not gray
     cv::cvtColor(dst, dst, cv::COLOR_GRAY2BGR);
-    cv::polylines(dst, squares, true, cv::Scalar(0, 255, 0), 3, cv::LINE_AA);
+    cv::polylines(dst, l_sqs, true, cv::Scalar(0, 255, 0), 3, cv::LINE_AA);
 
     cv::imshow(__func__, dst);
 }
