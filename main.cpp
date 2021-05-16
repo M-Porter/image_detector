@@ -136,11 +136,14 @@ void find_squares(cv::Mat &src, std::vector<std::vector<cv::Point>> &squares)
 
             if (maxCosine < 0.3)
             {
-                std::cout << "corner found" << std::endl;
                 squares.push_back(approx);
             }
         }
     }
+}
+
+void max_square_edges(std::vector<std::vector<cv::Point>> src, std::vector<std::vector<cv::Point>> &dst)
+{
 }
 
 void threshold_contours(cv::Mat src)
@@ -154,11 +157,17 @@ void threshold_contours(cv::Mat src)
     cv::threshold(dst, dst, 0, 100, cv::THRESH_TRIANGLE);
     cv::dilate(dst, dst, cv::Mat());
 
-    std::vector<std::vector<cv::Point>> squares;
-    find_squares(dst, squares);
+    std::vector<std::vector<cv::Point>> maybe_squares;
+    find_squares(dst, maybe_squares);
 
+    // find_squares sometimes returns rhombuses so we need to
+    // "expand" the four corners to be the max x and y values of it.
+    std::vector<std::vector<cv::Point>> squares;
+    max_square_edges(maybe_squares, squares);
+
+    // cvtColor to bgr so that polylines are green and not gray
     cv::cvtColor(dst, dst, cv::COLOR_GRAY2BGR);
-    cv::polylines(dst, squares, true, cv::Scalar(0, 255, 0), 3, cv::LINE_AA);
+    cv::polylines(dst, maybe_squares, true, cv::Scalar(0, 255, 0), 3, cv::LINE_AA);
 
     cv::imshow(__func__, dst);
 }
