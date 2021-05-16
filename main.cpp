@@ -233,7 +233,7 @@ void find_image(cv::Mat src)
     cv::cvtColor(dst, dst, cv::COLOR_BGR2GRAY);
     cv::medianBlur(dst, dst, 5);
     cv::threshold(dst, dst, 0, 500, cv::THRESH_TRIANGLE);
-    cv::dilate(dst, dst, cv::Mat());
+    // cv::dilate(dst, dst, cv::Mat());
 
     // at this point, determine if the image is a dark or light mode UI.
     // background color must be black for this to work
