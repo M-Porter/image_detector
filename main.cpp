@@ -83,30 +83,28 @@ void max_square_edges(std::vector<std::vector<cv::Point>> src, std::vector<std::
             min_y = MIN(min_y, src[i][j].y);
 
             std::cout
-                << "x: "
-                << src[i][j].x
-                << ", y: "
-                << src[i][j].y
-                << ", min x: "
-                << min_x
-                << ", max x: "
-                << max_x
-                << ", min y: "
-                << min_y
-                << ", max y: "
-                << max_y
+                << "x: " << src[i][j].x
+                << "\ty: " << src[i][j].y
+                << "\tmin x: " << min_x
+                << "\tmax x: " << max_x
+                << "\tmin y: " << min_y
+                << "\tmax y: " << max_y
                 << std::endl;
         }
 
         std::cout << std::endl;
-        std::cout << "max x: " << max_x << std::endl;
-        std::cout << "min x: " << min_x << std::endl;
-        std::cout << "max y: " << max_y << std::endl;
-        std::cout << "min y: " << min_y << std::endl;
+
+        std::cout
+            << "max x: " << max_x
+            << "\tmax y: " << max_y
+            << "\tmax y: " << max_y
+            << "\tmin y: " << min_y
+            << std::endl
+            << std::endl;
 
         std::vector<cv::Point> square_p;
 
-        // index 0 - top left, min x, min y
+        // index 0 - top left\tmin x, min y
         // index 1 - bottom left, min x, max y
         // index 2 - bottom right, max x, max y
         // index 3 - top right, max x, min y
@@ -134,13 +132,8 @@ void max_square_edges(std::vector<std::vector<cv::Point>> src, std::vector<std::
     }
 }
 
-/**
- * Determines if the first row of an image is white.
- */
-bool first_row_is_white(cv::Mat src)
+int avg_color_row(cv::Mat row)
 {
-    cv::Mat row = src.row(0);
-
     // get values as 0-255
     std::vector<int> shape = row.reshape(0);
 
@@ -152,24 +145,25 @@ bool first_row_is_white(cv::Mat src)
         total += shape[i];
     }
 
-    int avg = total / len;
+    return total / len;
+}
 
-    std::cout
-        << "Average: "
-        << avg
-        << std::endl;
-
+/**
+ * Determines if the first row of an image is white.
+ */
+bool first_row_is_white(cv::Mat src)
+{
+    int avg = avg_color_row(src.row(0));
     int d_white = abs(255 - avg);
     int d_black = abs(0 - avg);
     bool is_white = d_white < d_black;
 
     std::cout
-        << "is white: "
-        << is_white
-        << ", d_white: "
-        << d_white
-        << ", d_black: "
-        << d_black
+        << "avg: " << avg
+        << "\tis_white: " << is_white
+        << "\td_white: " << d_white
+        << "\td_black: " << d_black
+        << std::endl
         << std::endl;
 
     return is_white;
