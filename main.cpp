@@ -142,23 +142,23 @@ void find_squares(cv::Mat &src, std::vector<std::vector<cv::Point>> &squares)
     }
 }
 
-/*
-Contour sometimes returns uneven rectangle due to rounded corners. This function
-accounts for that and expands the rectangle to the max bounds of the src
-vectors setting it to out.
-*/
+/**
+ * Contour sometimes returns uneven rectangle due to rounded corners. This function
+ * accounts for that and expands the rectangle to the max bounds of the src
+ * vectors setting it to out.
+ */
 void max_square_edges(std::vector<std::vector<cv::Point>> src, std::vector<std::vector<cv::Point>> &dst)
 {
     dst.clear();
 
-    int max_x = INT_MIN;
-    int min_x = INT_MAX;
-    int max_y = INT_MIN;
-    int min_y = INT_MAX;
-
-    // first get the max min x and y values
+    // first get the max min x and y values for each set of points
     for (size_t i = 0; i < src.size(); i++)
     {
+        int max_x = INT_MIN;
+        int min_x = INT_MAX;
+        int max_y = INT_MIN;
+        int min_y = INT_MAX;
+
         for (size_t j = 0; j < src[i].size(); j++)
         {
             if (max_x == INT_MIN)
@@ -176,31 +176,28 @@ void max_square_edges(std::vector<std::vector<cv::Point>> src, std::vector<std::
             max_y = MAX(max_y, src[i][j].y);
             min_y = MIN(min_y, src[i][j].y);
 
-            std::cout
-                << "x: "
-                << src[i][j].x
-                << ", y: "
-                << src[i][j].y
-                << ", min x: "
-                << min_x
-                << ", max x: "
-                << max_x
-                << ", min y: "
-                << min_y
-                << ", max y: "
-                << max_y
-                << std::endl;
+            // std::cout
+            //     << "x: "
+            //     << src[i][j].x
+            //     << ", y: "
+            //     << src[i][j].y
+            //     << ", min x: "
+            //     << min_x
+            //     << ", max x: "
+            //     << max_x
+            //     << ", min y: "
+            //     << min_y
+            //     << ", max y: "
+            //     << max_y
+            //     << std::endl;
         }
-    }
 
-    std::cout << std::endl;
-    std::cout << "max x: " << max_x << std::endl;
-    std::cout << "min x: " << min_x << std::endl;
-    std::cout << "max y: " << max_y << std::endl;
-    std::cout << "min y: " << min_y << std::endl;
+        // std::cout << std::endl;
+        // std::cout << "max x: " << max_x << std::endl;
+        // std::cout << "min x: " << min_x << std::endl;
+        // std::cout << "max y: " << max_y << std::endl;
+        // std::cout << "min y: " << min_y << std::endl;
 
-    for (size_t i = 0; i < src.size(); i++)
-    {
         std::vector<cv::Point> square_p;
 
         // index 0 - top left, min x, min y
@@ -231,6 +228,47 @@ void max_square_edges(std::vector<std::vector<cv::Point>> src, std::vector<std::
     }
 }
 
+/**
+ * Determines if the first row of an image is white.
+ */
+bool first_row_is_white(cv::Mat src)
+{
+    cv::Mat row = src.row(0);
+
+    // get values as 0-255
+    std::vector<int> shape = row.reshape(0);
+
+    // get average and determine if closer to 0 or 255
+    size_t len = shape.size();
+    int total = 0;
+    for (size_t i = 0; i < shape.size(); i++)
+    {
+        total += shape[i];
+    }
+
+    int avg = total / len;
+
+    // std::cout
+    //     << "Average: "
+    //     << avg
+    //     << std::endl;
+
+    int d_white = abs(255 - avg);
+    int d_black = abs(0 - avg);
+    bool is_white = d_white < d_black;
+
+    // std::cout
+    //     << "is white: "
+    //     << is_white
+    //     << ", d_white: "
+    //     << d_white
+    //     << ", d_black: "
+    //     << d_black
+    //     << std::endl;
+
+    return is_white;
+}
+
 void threshold_contours(cv::Mat src)
 {
     cv::Mat dst;
@@ -239,8 +277,15 @@ void threshold_contours(cv::Mat src)
 
     cv::cvtColor(dst, dst, cv::COLOR_BGR2GRAY);
     cv::medianBlur(dst, dst, 5);
-    cv::threshold(dst, dst, 0, 100, cv::THRESH_TRIANGLE);
+    cv::threshold(dst, dst, 0, 500, cv::THRESH_TRIANGLE);
     cv::dilate(dst, dst, cv::Mat());
+
+    // at this point, determine if the image is a dark or light mode UI.
+    // background color must be black for this to work
+    if (first_row_is_white(dst))
+    {
+        cv::bitwise_not(dst, dst);
+    }
 
     std::vector<std::vector<cv::Point>> maybe_squares;
     find_squares(dst, maybe_squares);
