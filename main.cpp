@@ -104,7 +104,7 @@ void max_square_edges(std::vector<std::vector<cv::Point>> src, std::vector<std::
 
         std::vector<cv::Point> square_p;
 
-        // index 0 - top left\tmin x, min y
+        // index 0 - top left, min x, min y
         // index 1 - bottom left, min x, max y
         // index 2 - bottom right, max x, max y
         // index 3 - top right, max x, min y
