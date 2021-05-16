@@ -263,8 +263,9 @@ void find_image(cv::Mat src)
     cv::Mat cropped;
     crop_image(src, l_sq, cropped);
 
-    cv::imshow("cropped", cropped);
+    cv::imshow("original", src);
     cv::imshow(__func__, dst);
+    cv::imshow("cropped", cropped);
 }
 
 int main(int argc, char *argv[])
